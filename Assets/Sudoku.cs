@@ -45,28 +45,28 @@ public class Sudoku : MonoBehaviour {
 
     void ClearBoard() {
 		_createdMatrix = new Matrix<int>(_bigSide, _bigSide);
-		foreach(var cell in _board) {
+		int val = 0;
+		foreach(var cell in _board)
+		{
 			cell.number = 0;
 			cell.locked = cell.invalid = false;
 		}
-	}
+    }
 
 	void CreateEmptyBoard() {
 		float spacing = 68f;
 		float startX = -spacing * 4f;
 		float startY = spacing * 4f;
-
+		
 		_board = new Matrix<Cell>(_bigSide, _bigSide);
 		for(int x = 0; x<_board.Width; x++) {
 			for(int y = 0; y<_board.Height; y++) {
                 var cell = _board[x, y] = Instantiate(prefabCell);
-				cell.transform.SetParent(canvas.transform, false);
+                cell.transform.SetParent(canvas.transform, false);
 				cell.transform.localPosition = new Vector3(startX + x * spacing, startY - y * spacing, 0);
 			}
 		}
 	}
-	
-
 
 	//IMPLEMENTAR
 	int watchdog = 0;

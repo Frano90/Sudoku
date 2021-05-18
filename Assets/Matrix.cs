@@ -8,9 +8,16 @@ public class Matrix<T> : IEnumerable<T>
 {
     //IMPLEMENTAR: ESTRUCTURA INTERNA- DONDE GUARDO LOS DATOS?
 
+    private T[] _data;
+    
     public Matrix(int width, int height)
     {
-        //IMPLEMENTAR: constructor
+	    
+	    Width = width;
+	    Height = height;
+	    Capacity = width * height;
+	    
+	    _data = new T[Capacity];
     }
 
 	public Matrix(T[,] copyFrom)
@@ -36,15 +43,16 @@ public class Matrix<T> : IEnumerable<T>
 	}
 
     //Para poder igualar valores en la matrix a algo
-    public T this[int x, int y] {
-		get
-        {
-            //IMPLEMENTAR
-            return default(T);
-		}
-		set {
-            //IMPLEMENTAR
-		}
+    public T this[int x, int y] 
+    {
+	    get
+	    {
+		    return _data[x + Height * y];
+	    }
+	    set
+	    {
+		    _data[x + Height * y] = value;
+	    }
 	}
 
     public int Width { get; private set; }
@@ -55,8 +63,8 @@ public class Matrix<T> : IEnumerable<T>
 
     public IEnumerator<T> GetEnumerator()
     {
-        //IMPLEMENTAR
-        yield return default(T);
+	    for (int i = 0; i < _data.Length; i++)
+		    yield return _data[i];
     }
 
 	IEnumerator IEnumerable.GetEnumerator() {
