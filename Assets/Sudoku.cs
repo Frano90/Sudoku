@@ -41,11 +41,11 @@ public class Sudoku : MonoBehaviour {
         frequency = frequency * Mathf.Pow(r, 2);
         CreateEmptyBoard();
         ClearBoard();
+        
     }
 
     void ClearBoard() {
-		_createdMatrix = new Matrix<int>(_bigSide, _bigSide);
-		int val = 0;
+	    int val = 0;
 		foreach(var cell in _board)
 		{
 			cell.number = 0;
@@ -72,6 +72,11 @@ public class Sudoku : MonoBehaviour {
 	int watchdog = 0;
 	bool RecuSolve(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
     {
+	    //recibo la matrix
+	    //veo celda por celda
+	    //si la celda esta libre (no locked) ==> trato de poner un numero. Si lo pongo, paso a la celda siguiente, sino pongo el numero que le sigue.
+	    //si la celda esta locked ==> me guardo el numero que esta dentro
+	    //repeat
 		return false;
 	}
 
@@ -129,9 +134,9 @@ public class Sudoku : MonoBehaviour {
         ClearBoard();
         List<Matrix<int>> l = new List<Matrix<int>>();
         watchdog = 100000;
-        GenerateValidLine(_createdMatrix, 0, 0);
-        var result =false;
         _createdMatrix = l[0].Clone();
+        GenerateValidLine(_createdMatrix, 0, 0);
+        var result = false;
         LockRandomCells();
         ClearUnlocked(_createdMatrix);
         TranslateAllValues(_createdMatrix);
@@ -157,7 +162,7 @@ public class Sudoku : MonoBehaviour {
 		}
 		for (int k = 0; k < aux.Length; k++) 
 		{
-			mtx [k, 0] = aux [k];
+			mtx [k, 0] = aux [k];	
 		}
 	}
 
@@ -216,9 +221,11 @@ public class Sudoku : MonoBehaviour {
     }
     void CreateNew()
     {
-        _createdMatrix = new Matrix<int>(Tests.validBoards[1]);
-        TranslateAllValues(_createdMatrix);
+	    _createdMatrix = new Matrix<int>(Tests.validBoards[18]);
+
+	    TranslateAllValues(_createdMatrix);
     }
+
 
     bool CanPlaceValue(Matrix<int> mtx, int value, int x, int y)
     {

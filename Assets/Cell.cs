@@ -10,7 +10,7 @@ public class Cell : MonoBehaviour {
 	public Text label;
 	
 	int _number;
-	bool _locked;
+	[SerializeField] bool _locked;
 	bool _invalid;
 	Image _image;
 	Color _prev;

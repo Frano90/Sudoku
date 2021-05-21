@@ -22,12 +22,34 @@ public class Matrix<T> : IEnumerable<T>
 
 	public Matrix(T[,] copyFrom)
     {
-        //IMPLEMENTAR: crea una version de Matrix a partir de una matriz básica de C#
+	    Capacity = copyFrom.Length;
+        Width = Height = Mathf.RoundToInt(Mathf.Sqrt(Capacity));
+
+        _data = new T[Capacity];
+        int val = 0;
+        
+        for (int i = 0; i < Width; i++)
+        {
+	        for (int j = 0; j < Height; j++)
+	        {
+		        _data[val] = copyFrom[i, j];
+		        val++;
+	        }
+        }
     }
 
 	public Matrix<T> Clone() {
         Matrix<T> aux = new Matrix<T>(Width, Height);
-        //IMPLEMENTAR
+        
+        Debug.Log("asdasdsa");
+        for (int i = 0; i < Width; i++)
+        {
+	        for (int j = 0; j < Height; j++)
+	        {
+		        Debug.Log(this[i,j]);
+		        aux[i, j] = this[i,j];
+	        }
+        }
         return aux;
     }
 
