@@ -6,9 +6,7 @@ using System.Collections.Generic;
 
 public class Matrix<T> : IEnumerable<T>
 {
-    //IMPLEMENTAR: ESTRUCTURA INTERNA- DONDE GUARDO LOS DATOS?
-
-    private T[] _data;
+	private T[] _data;
     
     public Matrix(int width, int height)
     {
@@ -41,12 +39,10 @@ public class Matrix<T> : IEnumerable<T>
 	public Matrix<T> Clone() {
         Matrix<T> aux = new Matrix<T>(Width, Height);
         
-        Debug.Log("asdasdsa");
         for (int i = 0; i < Width; i++)
         {
 	        for (int j = 0; j < Height; j++)
 	        {
-		        Debug.Log(this[i,j]);
 		        aux[i, j] = this[i,j];
 	        }
         }
@@ -55,16 +51,30 @@ public class Matrix<T> : IEnumerable<T>
 
 	public void SetRangeTo(int x0, int y0, int x1, int y1, T item) {
         //IMPLEMENTAR: iguala todo el rango pasado por parámetro a item
-    }
+        {
+	        for (int x = x0; x <= x1; x++)
+	        {
+		        for (int y = y0; y <= y1; y++)
+		        {
+			        _data[x + Height * y] = item; 
+		        }
+	        }
 
-    //Todos los parametros son INCLUYENTES
+        }
+    }
+	
     public List<T> GetRange(int x0, int y0, int x1, int y1) {
         List<T> l = new List<T>();
-        //IMPLEMENTAR
+        
+        for (int x = x0; x < x1; x++)
+        {
+	        for (int y = y0; y < y1; y++)
+	        {
+		        l.Add(_data[x + Height * y]); 
+	        }
+        }
         return l;
 	}
-
-    //Para poder igualar valores en la matrix a algo
     public T this[int x, int y] 
     {
 	    get

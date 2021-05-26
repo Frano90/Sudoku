@@ -41,10 +41,14 @@ public class Sudoku : MonoBehaviour {
         frequency = frequency * Mathf.Pow(r, 2);
         CreateEmptyBoard();
         ClearBoard();
+
         
     }
 
     void ClearBoard() {
+	    
+	    _createdMatrix = new Matrix<int>(_bigSide, _bigSide);
+	    
 	    int val = 0;
 		foreach(var cell in _board)
 		{
@@ -68,17 +72,7 @@ public class Sudoku : MonoBehaviour {
 		}
 	}
 
-	//IMPLEMENTAR
-	int watchdog = 0;
-	bool RecuSolve(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
-    {
-	    //recibo la matrix
-	    //veo celda por celda
-	    //si la celda esta libre (no locked) ==> trato de poner un numero. Si lo pongo, paso a la celda siguiente, sino pongo el numero que le sigue.
-	    //si la celda esta locked ==> me guardo el numero que esta dentro
-	    //repeat
-		return false;
-	}
+	
 
 
     void OnAudioFilterRead(float[] array, int channels)
@@ -109,7 +103,13 @@ public class Sudoku : MonoBehaviour {
 		if(Input.GetKeyDown(KeyCode.R) || Input.GetMouseButtonDown(1))
             SolvedSudoku();
         else if(Input.GetKeyDown(KeyCode.C) || Input.GetMouseButtonDown(0)) 
-            CreateSudoku();	
+            CreateSudoku();
+
+
+		if (Input.GetKeyDown(KeyCode.Space))
+		{
+			CheckIncorrectCellsNumber();
+		}
 	}
 
 	//modificar lo necesario para que funcione.
@@ -134,9 +134,14 @@ public class Sudoku : MonoBehaviour {
         ClearBoard();
         List<Matrix<int>> l = new List<Matrix<int>>();
         watchdog = 100000;
-        _createdMatrix = l[0].Clone();
         GenerateValidLine(_createdMatrix, 0, 0);
-        var result = false;
+        var result = RecuSolve(_createdMatrix, 0,1, 1, l);    
+        
+        Debug.Log(result);
+        Debug.Log(l.Count);
+        _createdMatrix = l[l.Count-1].Clone();
+        
+        
         LockRandomCells();
         ClearUnlocked(_createdMatrix);
         TranslateAllValues(_createdMatrix);
@@ -145,15 +150,64 @@ public class Sudoku : MonoBehaviour {
         canSolve = result ? " VALID" : " INVALID";
         feedback.text = "Pasos: " + l.Count + "/" + l.Count + " - " + memory + " - " + canSolve;
     }
+    
+    //IMPLEMENTAR
+    public int watchdog = 0;
+    bool RecuSolve(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
+    {
+	    watchdog--;
+	    if (watchdog <= 0)
+	    {
+		    return false;
+	    }
+	    if (x >= matrixParent.Width)
+	    {
+		    y++;
+		    x = 0;
+		    if (y >= matrixParent.Height)
+		    {
+			    return true;
+		    }
+            
+	    }
+	    
+	    Debug.Log("aca" + " x" + x + " y " + y);
+	    if (_board[x, y].locked)
+	    {
+		    return RecuSolve(matrixParent, x+1, y, 1, solution);
+	    }
+	    else
+	    {
+		    for (int item = 1; item <= 9; item++)
+		    {
+			    Debug.Log(CanPlaceValue(matrixParent, item, x, y));
+			    if (CanPlaceValue(matrixParent, item, x, y))
+			    {
+				    Matrix<int> result = matrixParent.Clone();
+				    result[x, y] = item;
+				    solution.Add(result);
+				    if (RecuSolve(result, x + 1, y, 1, solution))
+				    {
+					    return true;
+				    }
+			    }
+		    }
+		    return false;    
+	    }
+	    
+	    
+		
+    }
+    
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
 	{
-		int[]aux = new int[9];
+		int[]aux = new int[9]; //creo 9 numeros
 		for (int i = 0; i < 9; i++) 
 		{
 			aux [i] = i + 1;
 		}
 		int numAux = 0;
-		for (int j = 0; j < aux.Length; j++) 
+		for (int j = 0; j < aux.Length; j++) //hago un shuffle de esos 9 numeros
 		{
 			int r = 1 + Random.Range(j,aux.Length);
 			numAux = aux [r-1];
@@ -221,9 +275,38 @@ public class Sudoku : MonoBehaviour {
     }
     void CreateNew()
     {
-	    _createdMatrix = new Matrix<int>(Tests.validBoards[18]);
+	    _createdMatrix = new Matrix<int>(Tests.validBoards[8]);
 
 	    TranslateAllValues(_createdMatrix);
+
+	    LockCells();
+	    
+    }
+
+    private void CheckIncorrectCellsNumber()
+    {
+	    for (int x = 0; x < _board.Width; x++)
+	    {
+		    for (int y = 0; y < _board.Height; y++)
+		    {
+			    if (!CanPlaceValue(_createdMatrix, _board[x, y].number, x, y))
+				    _board[x, y].invalid = true;
+		    }
+	    }
+    }
+
+    private void LockCells()
+    {
+	    for (int x = 0; x < _board.Width; x++)
+	    {
+		    for (int y = 0; y < _board.Height; y++)
+		    {
+			    if (_board[x, y].number != 0) _board[x, y].locked = true;
+
+		    }
+	    }
+	    
+	    
     }
 
 
