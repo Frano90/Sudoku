@@ -95,9 +95,29 @@ public class Sudoku : MonoBehaviour {
 
 	//IMPLEMENTAR - punto 3
 	IEnumerator ShowSequence(List<Matrix<int>> seq)
-    {
-        yield return new WaitForSeconds(0);
-    }
+	{
+		int step = 0;
+		int totalSteps = GetUnLockedCellAmount();
+		
+		
+		Matrix<int> completedSeq = seq[seq.Count - 1];
+		
+		for (int i = 0; i < _createdMatrix.Width; i++)
+		{
+			for (int j = 0; j < _createdMatrix.Height; j++)
+			{
+				feedback.text = "Pasos: " + step + "/" + totalSteps + " - " + memory + " - " + canSolve;	
+				
+				if(_board[i,j].locked) continue;
+					
+				var a = completedSeq[i, j];	
+				TranslateSpecific(a, i, j);
+				step++;
+					
+				yield return new WaitForSeconds(stepDuration);	
+			}	
+		}
+	}
 
 	void Update () {
 		if(Input.GetKeyDown(KeyCode.R) || Input.GetMouseButtonDown(1))
@@ -119,11 +139,12 @@ public class Sudoku : MonoBehaviour {
         nums = new List<int>();
         var solution = new List<Matrix<int>>();
         watchdog = 100000;
-        var result =false;//????
+        var result = RecuSolve(_createdMatrix, 0, 0, 1, solution);
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
-		//???
+        
+        StartCoroutine(ShowSequence(solution));
     }
 
     void CreateSudoku()
@@ -137,8 +158,6 @@ public class Sudoku : MonoBehaviour {
         GenerateValidLine(_createdMatrix, 0, 0);
         var result = RecuSolve(_createdMatrix, 0,1, 1, l);    
         
-        Debug.Log(result);
-        Debug.Log(l.Count);
         _createdMatrix = l[l.Count-1].Clone();
         
         
@@ -151,7 +170,6 @@ public class Sudoku : MonoBehaviour {
         feedback.text = "Pasos: " + l.Count + "/" + l.Count + " - " + memory + " - " + canSolve;
     }
     
-    //IMPLEMENTAR
     public int watchdog = 0;
     bool RecuSolve(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
     {
@@ -171,32 +189,24 @@ public class Sudoku : MonoBehaviour {
             
 	    }
 	    
-	    Debug.Log("aca" + " x" + x + " y " + y);
 	    if (_board[x, y].locked)
 	    {
 		    return RecuSolve(matrixParent, x+1, y, 1, solution);
 	    }
-	    else
+	    
+	    for (int posibleNum = 1; posibleNum <= 9; posibleNum++)
 	    {
-		    for (int item = 1; item <= 9; item++)
+		    if (CanPlaceValue(matrixParent, posibleNum, x, y))
 		    {
-			    Debug.Log(CanPlaceValue(matrixParent, item, x, y));
-			    if (CanPlaceValue(matrixParent, item, x, y))
-			    {
-				    Matrix<int> result = matrixParent.Clone();
-				    result[x, y] = item;
-				    solution.Add(result);
-				    if (RecuSolve(result, x + 1, y, 1, solution))
-				    {
-					    return true;
-				    }
-			    }
+			    Matrix<int> result = matrixParent.Clone();
+			    result[x, y] = posibleNum;
+			    solution.Add(result);
+			    if (RecuSolve(result, x + 1, y, 1, solution))
+				    return true;
+			    
 		    }
-		    return false;    
 	    }
-	    
-	    
-		
+	    return false;
     }
     
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
@@ -367,5 +377,18 @@ public class Sudoku : MonoBehaviour {
             if (list[i] != 0) aux.Add(list[i]);
         }
         return aux;
+    }
+
+    int GetUnLockedCellAmount()
+    {
+	    int aux = 0;
+	    foreach (var cell in _board)
+	    {
+		    if(cell.locked) continue;
+
+		    aux++;
+	    }
+
+	    return aux;
     }
 }

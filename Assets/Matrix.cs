@@ -10,7 +10,6 @@ public class Matrix<T> : IEnumerable<T>
     
     public Matrix(int width, int height)
     {
-	    
 	    Width = width;
 	    Height = height;
 	    Capacity = width * height;
@@ -50,8 +49,7 @@ public class Matrix<T> : IEnumerable<T>
     }
 
 	public void SetRangeTo(int x0, int y0, int x1, int y1, T item) {
-        //IMPLEMENTAR: iguala todo el rango pasado por parámetro a item
-        {
+		{
 	        for (int x = x0; x <= x1; x++)
 	        {
 		        for (int y = y0; y <= y1; y++)
