@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.UI;
 
 
@@ -14,13 +15,13 @@ public class Sudoku : MonoBehaviour {
 	Matrix<Cell> _board;
 	Matrix<int> _createdMatrix;
     List<int> posibles = new List<int>();
-	int _smallSide;
-	int _bigSide;
+	[SerializeField] int _smallSide;
+	[SerializeField] int _bigSide;
     string memory = "";
     string canSolve = "";
     bool canPlayMusic = false;
     List<int> nums = new List<int>();
-
+    private Matrix<int> _currentCorrectSudoku;
 
 
     float r = 1.0594f;
@@ -36,8 +37,7 @@ public class Sudoku : MonoBehaviour {
         long mem = System.GC.GetTotalMemory(true);
         feedback.text = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         memory = feedback.text;
-        _smallSide = 3;
-        _bigSide = _smallSide * 3;
+        _bigSide = _smallSide * _smallSide;
         frequency = frequency * Mathf.Pow(r, 2);
         CreateEmptyBoard();
         ClearBoard();
@@ -92,28 +92,26 @@ public class Sudoku : MonoBehaviour {
     {
         frequency = 440 + num * 80;
     }
-
-	//IMPLEMENTAR - punto 3
-	IEnumerator ShowSequence(List<Matrix<int>> seq)
+    IEnumerator ShowSequence(List<Matrix<int>> seq)
 	{
 		int step = 0;
 		int totalSteps = GetUnLockedCellAmount();
 		
-		
 		Matrix<int> completedSeq = seq[seq.Count - 1];
+	
 		
 		for (int i = 0; i < _createdMatrix.Width; i++)
 		{
 			for (int j = 0; j < _createdMatrix.Height; j++)
 			{
-				feedback.text = "Pasos: " + step + "/" + totalSteps + " - " + memory + " - " + canSolve;	
+				//feedback.text = "Pasos: " + step + "/" + totalSteps + " - " + memory + " - " + canSolve;	
 				
 				if(_board[i,j].locked) continue;
 					
 				var a = completedSeq[i, j];	
+				
 				TranslateSpecific(a, i, j);
 				step++;
-					
 				yield return new WaitForSeconds(stepDuration);	
 			}	
 		}
@@ -125,20 +123,21 @@ public class Sudoku : MonoBehaviour {
         else if(Input.GetKeyDown(KeyCode.C) || Input.GetMouseButtonDown(0)) 
             CreateSudoku();
 
-
-		if (Input.GetKeyDown(KeyCode.Space))
+		
+		if(Input.GetKeyDown(KeyCode.B))
 		{
-			CheckIncorrectCellsNumber();
+			ResolveBrute();
 		}
+		
+		
 	}
-
-	//modificar lo necesario para que funcione.
+	
     void SolvedSudoku()
     {
         StopAllCoroutines();
         nums = new List<int>();
         var solution = new List<Matrix<int>>();
-        watchdog = 100000;
+        watchdog = 100000 * _smallSide;
         var result = RecuSolve(_createdMatrix, 0, 0, 1, solution);
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
@@ -154,13 +153,13 @@ public class Sudoku : MonoBehaviour {
         canPlayMusic = false;
         ClearBoard();
         List<Matrix<int>> l = new List<Matrix<int>>();
-        watchdog = 100000;
+        watchdog = 100000 * _bigSide;
         GenerateValidLine(_createdMatrix, 0, 0);
         var result = RecuSolve(_createdMatrix, 0,1, 1, l);    
         
         _createdMatrix = l[l.Count-1].Clone();
-        
-        
+
+        _currentCorrectSudoku = _createdMatrix;
         LockRandomCells();
         ClearUnlocked(_createdMatrix);
         TranslateAllValues(_createdMatrix);
@@ -184,6 +183,7 @@ public class Sudoku : MonoBehaviour {
 		    x = 0;
 		    if (y >= matrixParent.Height)
 		    {
+			    feedback.text = "Pasos: " + solution.Count + "/" + solution.Count + " - " + memory + " - " + canSolve;
 			    return true;
 		    }
             
@@ -194,7 +194,7 @@ public class Sudoku : MonoBehaviour {
 		    return RecuSolve(matrixParent, x+1, y, 1, solution);
 	    }
 	    
-	    for (int posibleNum = 1; posibleNum <= 9; posibleNum++)
+	    for (int posibleNum = 1; posibleNum <= _bigSide; posibleNum++)
 	    {
 		    if (CanPlaceValue(matrixParent, posibleNum, x, y))
 		    {
@@ -211,13 +211,13 @@ public class Sudoku : MonoBehaviour {
     
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
 	{
-		int[]aux = new int[9]; //creo 9 numeros
-		for (int i = 0; i < 9; i++) 
+		int[]aux = new int[_bigSide]; 
+		for (int i = 0; i < _bigSide; i++) 
 		{
 			aux [i] = i + 1;
 		}
 		int numAux = 0;
-		for (int j = 0; j < aux.Length; j++) //hago un shuffle de esos 9 numeros
+		for (int j = 0; j < aux.Length; j++) 
 		{
 			int r = 1 + Random.Range(j,aux.Length);
 			numAux = aux [r-1];
@@ -241,6 +241,50 @@ public class Sudoku : MonoBehaviour {
 		}
 	}
 
+	void TheMostBruteSudokuPlayer(Matrix<int> matrixParent, List<Matrix<int>> solution)
+	{
+		
+		Matrix<int> result = matrixParent.Clone();
+		int step = 0;
+		for (int i = 0; i < result.Width; i++)
+		{
+			for (int j = 0; j < result.Height; j++)
+			{
+				step++;
+					
+				if (_board[i, j].locked)
+					continue;
+
+
+				int rgn = -1;
+				
+				do
+				{
+					rgn = Random.Range(0, _bigSide) + 1;
+				} while (!CanPlaceValue(result, rgn, i, j));
+				
+				Debug.Log(rgn + " esto entra bien?");
+				result[i, j] = rgn;
+				solution.Add(result);
+
+			}
+		}
+	}
+
+
+	void ResolveBrute()
+	{
+		StopAllCoroutines();
+		nums = new List<int>();
+		var solution = new List<Matrix<int>>();
+		TheMostBruteSudokuPlayer(_createdMatrix, solution);
+		watchdog = 100000;
+		StartCoroutine(ShowSequence(solution));
+		long mem = System.GC.GetTotalMemory(true);
+		memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
+		//canSolve = result ? " VALID" : " INVALID";
+	}
+	
 	void LockRandomCells()
 	{
 		List<Vector2> posibles = new List<Vector2> ();
@@ -250,7 +294,7 @@ public class Sudoku : MonoBehaviour {
 					posibles.Add (new Vector2(j,i));
 			}
 		}
-		for (int k = 0; k < 82-difficulty; k++) {
+		for (int k = 0; k < (_board.Capacity + 1)-difficulty; k++) {
 			int r = Random.Range (0, posibles.Count);
 			_board [(int)posibles [r].x, (int)posibles [r].y].locked = true;
 			posibles.RemoveAt (r);
@@ -340,23 +384,25 @@ public class Sudoku : MonoBehaviour {
 
 
 
-        cuadrante.x = (int)(x / 3);
-
-        if (x < 3)
-            cuadrante.x = 0;     
-        else if (x < 6)
-            cuadrante.x = 3;
-        else
-            cuadrante.x = 6;
-
-        if (y < 3)
-            cuadrante.y = 0;
-        else if (y < 6)
-            cuadrante.y = 3;
-        else
-            cuadrante.y = 6;
-         
-        area = mtx.GetRange((int)cuadrante.x, (int)cuadrante.y, (int)cuadrante.x + 3, (int)cuadrante.y + 3);
+        for (int i = 1; i <= _smallSide; i++)
+        {
+	        if (x < _smallSide * i)
+	        {
+		        cuadrante.x = (i - 1) * _smallSide;
+		        break;
+	        }
+        }
+        
+        for (int j = 1; j <= _smallSide; j++)
+        {
+	        if (y < _smallSide * j)
+	        {
+		        cuadrante.y = (j - 1) * _smallSide;
+		        break;
+	        }
+        }
+        
+        area = mtx.GetRange((int)cuadrante.x, (int)cuadrante.y, (int)cuadrante.x + _smallSide, (int)cuadrante.y + _smallSide);
         total.AddRange(fila);
         total.AddRange(columna);
         total.AddRange(area);
