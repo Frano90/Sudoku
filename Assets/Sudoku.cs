@@ -241,7 +241,7 @@ public class Sudoku : MonoBehaviour {
 		}
 	}
 
-	void TheMostBruteSudokuPlayer(Matrix<int> matrixParent, List<Matrix<int>> solution)
+	IEnumerator TheMostBruteSudokuPlayer(Matrix<int> matrixParent, List<Matrix<int>> solution)
 	{
 		
 		Matrix<int> result = matrixParent.Clone();
@@ -250,7 +250,7 @@ public class Sudoku : MonoBehaviour {
 		{
 			for (int j = 0; j < result.Height; j++)
 			{
-				step++;
+				
 					
 				if (_board[i, j].locked)
 					continue;
@@ -260,7 +260,15 @@ public class Sudoku : MonoBehaviour {
 				
 				do
 				{
+					if (watchdog <= 0)
+						break;
+					
+					
+					watchdog--;
+					step++;
 					rgn = Random.Range(0, _bigSide) + 1;
+					feedback.text = "Pasos dados de bruto " + step;
+					yield return new WaitForEndOfFrame();
 				} while (!CanPlaceValue(result, rgn, i, j));
 				
 				Debug.Log(rgn + " esto entra bien?");
@@ -269,6 +277,9 @@ public class Sudoku : MonoBehaviour {
 
 			}
 		}
+
+		StartCoroutine(ShowSequence(solution));
+		
 	}
 
 
@@ -277,9 +288,10 @@ public class Sudoku : MonoBehaviour {
 		StopAllCoroutines();
 		nums = new List<int>();
 		var solution = new List<Matrix<int>>();
-		TheMostBruteSudokuPlayer(_createdMatrix, solution);
+		// TheMostBruteSudokuPlayer(_createdMatrix, solution);
+		StartCoroutine(TheMostBruteSudokuPlayer(_createdMatrix, solution));
 		watchdog = 100000;
-		StartCoroutine(ShowSequence(solution));
+		
 		long mem = System.GC.GetTotalMemory(true);
 		memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
 		//canSolve = result ? " VALID" : " INVALID";
@@ -335,18 +347,6 @@ public class Sudoku : MonoBehaviour {
 
 	    LockCells();
 	    
-    }
-
-    private void CheckIncorrectCellsNumber()
-    {
-	    for (int x = 0; x < _board.Width; x++)
-	    {
-		    for (int y = 0; y < _board.Height; y++)
-		    {
-			    if (!CanPlaceValue(_createdMatrix, _board[x, y].number, x, y))
-				    _board[x, y].invalid = true;
-		    }
-	    }
     }
 
     private void LockCells()
