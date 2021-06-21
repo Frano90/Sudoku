@@ -95,23 +95,21 @@ public class Sudoku : MonoBehaviour {
     IEnumerator ShowSequence(List<Matrix<int>> seq)
 	{
 		int step = 0;
-		int totalSteps = GetUnLockedCellAmount();
+		//int totalSteps = GetUnLockedCellAmount();
 		
 		Matrix<int> completedSeq = seq[seq.Count - 1];
-	
-		
+
 		for (int i = 0; i < _createdMatrix.Width; i++)
 		{
 			for (int j = 0; j < _createdMatrix.Height; j++)
 			{
-				//feedback.text = "Pasos: " + step + "/" + totalSteps + " - " + memory + " - " + canSolve;	
-				
 				if(_board[i,j].locked) continue;
 					
-				var a = completedSeq[i, j];	
+				var num = completedSeq[i, j];	
 				
-				TranslateSpecific(a, i, j);
+				TranslateSpecific(num, i, j);
 				step++;
+				feedback.text = "Pasos: " + step + "/" + seq.Count + " - " + memory + " - " + canSolve;
 				yield return new WaitForSeconds(stepDuration);	
 			}	
 		}
@@ -148,21 +146,19 @@ public class Sudoku : MonoBehaviour {
 
     void CreateSudoku()
     {
-        StopAllCoroutines();
-        nums = new List<int>();
-        canPlayMusic = false;
-        ClearBoard();
-        List<Matrix<int>> l = new List<Matrix<int>>();
-        watchdog = 100000 * _bigSide;
-        GenerateValidLine(_createdMatrix, 0, 0);
-        var result = RecuSolve(_createdMatrix, 0,1, 1, l);    
-        
-        _createdMatrix = l[l.Count-1].Clone();
-
+        StopAllCoroutines(); //para todo lo que estoy haciendo
+        nums = new List<int>(); //vino con el tp, no se que hace
+        canPlayMusic = false; // algo de musica que no me importa
+        ClearBoard(); //limpio el tablero
+        List<Matrix<int>> l = new List<Matrix<int>>(); //creo una lista de matrices donde van a estar todos los posibles resultados que el algoritmo encuentre
+        watchdog = 100000 * _bigSide; // para que no se tilde
+        GenerateValidLine(_createdMatrix, 0, 0); // es la seed del sudoku. Puede estar mas randomizada
+        var result = RecuSolve(_createdMatrix, 0,1, 1, l);
+        _createdMatrix = l[l.Count-1].Clone(); //me guardo la solucion final
         _currentCorrectSudoku = _createdMatrix;
-        LockRandomCells();
-        ClearUnlocked(_createdMatrix);
-        TranslateAllValues(_createdMatrix);
+         LockRandomCells(); // lo que dice el nombre
+         ClearUnlocked(_createdMatrix);
+         TranslateAllValues(_createdMatrix);
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
@@ -189,12 +185,12 @@ public class Sudoku : MonoBehaviour {
             
 	    }
 	    
-	    if (_board[x, y].locked)
+	    if (_board[x, y].locked)//si ya tiene un numero vuelvo a la recursion
 	    {
-		    return RecuSolve(matrixParent, x+1, y, 1, solution);
+		    return RecuSolve(matrixParent, x+1, y, 1, solution); //le sumo +1 a X
 	    }
 	    
-	    for (int posibleNum = 1; posibleNum <= _bigSide; posibleNum++)
+	    for (int posibleNum = 1; posibleNum <= _bigSide; posibleNum++) //recorro los numeros del 1 al "maximo de espacios"
 	    {
 		    if (CanPlaceValue(matrixParent, posibleNum, x, y))
 		    {
@@ -211,20 +207,21 @@ public class Sudoku : MonoBehaviour {
     
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
 	{
-		int[]aux = new int[_bigSide]; 
+		int[]aux = new int[_bigSide]; //hago array de cantidad de numeros para completar una fila
 		for (int i = 0; i < _bigSide; i++) 
 		{
 			aux [i] = i + 1;
 		}
 		int numAux = 0;
-		for (int j = 0; j < aux.Length; j++) 
+		for (int j = 0; j < aux.Length; j++) //shuffle de los valores dentro de aux
 		{
 			int r = 1 + Random.Range(j,aux.Length);
 			numAux = aux [r-1];
 			aux [r-1] = aux [j];
 			aux [j] = numAux;
 		}
-		for (int k = 0; k < aux.Length; k++) 
+		
+		for (int k = 0; k < aux.Length; k++) //completo una linea de la matrix (fila)
 		{
 			mtx [k, 0] = aux [k];	
 		}
@@ -250,8 +247,6 @@ public class Sudoku : MonoBehaviour {
 		{
 			for (int j = 0; j < result.Height; j++)
 			{
-				
-					
 				if (_board[i, j].locked)
 					continue;
 
@@ -381,8 +376,6 @@ public class Sudoku : MonoBehaviour {
                 else if(i == y && j != x) fila.Add(mtx[j,i]);
             }
         }
-
-
 
         for (int i = 1; i <= _smallSide; i++)
         {
